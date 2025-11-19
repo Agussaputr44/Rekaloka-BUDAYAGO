@@ -1,9 +1,11 @@
 import 'package:dartz/dartz.dart';
-import 'package:rekaloka_app/common/failure.dart';
-import 'package:rekaloka_app/data/datasources/auth_remote_datasource.dart';
-import 'package:rekaloka_app/data/datasources/local/token_local_datasource.dart';
-import 'package:rekaloka_app/domain/entities/user.dart';
-import 'package:rekaloka_app/domain/repositories/auth_repository.dart';
+import '../../common/exceptions.dart';
+import '../../common/failure.dart';
+import '../datasources/auth_remote_datasource.dart';
+import '../datasources/local/token_local_datasource.dart';
+import '../../domain/entities/user.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../models/register_response_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -15,15 +17,23 @@ class AuthRepositoryImpl implements AuthRepository {
   });
 
   @override
-  Future<Either<Failure, User>> register(
+  Future<Either<Failure, void>> register(
     String email,
     String password,
     String name,
   ) async {
     try {
-      final result = await remoteDataSource.register(email, password, name);
-      await tokenLocalDataSource.saveToken(result.token);
-      return Right(result.user.toEntity());
+      final RegisterResponseModel result = await remoteDataSource.register(
+        email,
+        password,
+        name,
+      );
+
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    } on DatabaseException catch (e) {
+      return Left(DatabaseFailure(e.message));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -33,7 +43,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, User>> login(String email, String password) async {
     try {
       final result = await remoteDataSource.login(email, password);
-      // Simpan token di sini nanti (shared prefs / secure storage)
       return Right(result.user.toEntity());
     } catch (e) {
       return Left(ServerFailure(e.toString()));

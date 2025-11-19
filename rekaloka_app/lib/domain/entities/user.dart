@@ -2,26 +2,33 @@ import 'package:equatable/equatable.dart';
 
 class User extends Equatable {
   final String id;
-  final String name;
+  final String username; 
   final String email;
+  final bool isVerified; 
   final DateTime? emailVerifiedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   const User({
     required this.id,
-    required this.name,
+    required this.username, 
     required this.email,
+    required this.isVerified,
     this.emailVerifiedAt,
     required this.createdAt,
     required this.updatedAt,
   });
 
-  User copyWith({String? name, DateTime? updatedAt}) {
+  User copyWith({
+    String? username, 
+    bool? isVerified, 
+    DateTime? updatedAt
+  }) {
     return User(
       id: id,
-      name: name ?? this.name,
+      username: username ?? this.username, 
       email: email,
+      isVerified: isVerified ?? this.isVerified, 
       emailVerifiedAt: emailVerifiedAt,
       createdAt: createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
@@ -31,8 +38,9 @@ class User extends Equatable {
   @override
   List<Object?> get props => [
     id,
-    name,
+    username, // KOREKSI
     email,
+    isVerified, // BARU
     emailVerifiedAt,
     createdAt,
     updatedAt,

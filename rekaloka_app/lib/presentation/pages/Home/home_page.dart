@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 
-class Screen extends StatefulWidget {
+class HomePage extends StatefulWidget {
    static const ROUTE_NAME = '/home';
 
-  const Screen({ Key? key }) : super(key: key);
+  const HomePage({ super.key });
 
   @override
-  _ScreenState createState() => _ScreenState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _ScreenState extends State<Screen> {
+class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      child: 
+      Text('Home Page'),
       
     );
   }

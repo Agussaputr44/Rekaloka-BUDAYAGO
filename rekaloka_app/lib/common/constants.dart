@@ -63,12 +63,10 @@ const kColorScheme = ColorScheme(
   primary: kAccentOrange,
   secondary: kInputIconColor,
   surface: kInputBackground,
-  background: kPrimaryBrown,
   error: Colors.red,
   onPrimary: kTextWhite,
   onSecondary: kTextWhite,
   onSurface: kPrimaryBrown,
-  onBackground: kTextWhite,
   onError: kTextWhite,
   brightness: Brightness.light,
 );
