@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/register_response_model.dart';
-import 'local/token_local_datasource.dart';
+import 'local/auth_local_datasource.dart';
 import '../models/login_response_model.dart';
 import '../models/user_model.dart';
 
@@ -13,20 +13,24 @@ abstract class AuthRemoteDataSource {
   );
   Future<LoginResponseModel> login(String email, String password);
   Future<void> verifyEmail(String email, String code);
-  Future<UserModel> getUserProfile();
+  Future<UserModel> getUserProfile(String token);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  final TokenLocalDataSource tokenLocalDataSource;
+  final AuthLocalDatasource authLocalDatasource;
   final http.Client client;
-  final String baseUrl = 'https://rekaloka-api2.vercel.app/api/auth';
+  final String authUrl = 'https://fancy-quick-lacewing.ngrok-free.app/api/auth';
+  
+  final String profileUrl =
+      'https://fancy-quick-lacewing.ngrok-free.app/api/profile';
 
   AuthRemoteDataSourceImpl({
     required this.client,
-    required this.tokenLocalDataSource,
+    required this.authLocalDatasource,
   });
+
   Map<String, String> _authHeaders() {
-    final token = tokenLocalDataSource.getToken();
+    final token = authLocalDatasource.getToken();
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -41,7 +45,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     String name,
   ) async {
     final response = await client.post(
-      Uri.parse('$baseUrl/register'),
+      Uri.parse('$authUrl/register'),
       headers: _authHeaders(),
       body: jsonEncode({
         'username': name,
@@ -61,21 +65,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<LoginResponseModel> login(String email, String password) async {
-    print('DEBUG: [Login] Request URL: $baseUrl/login');
-    print(
-      'DEBUG: [Login] Request Body: ${jsonEncode({'email': email, 'password': password})}',
-    );
-
     final response = await client.post(
-      Uri.parse('$baseUrl/login'),
+      Uri.parse('$authUrl/login'),
       headers: _authHeaders(),
       body: jsonEncode({'email': email, 'password': password}),
     );
 
-    print('DEBUG: [Login] Response Status Code: ${response.statusCode}');
-    print('DEBUG: [Login] Response Body: ${response.body}');
-
-    final String responseBody = response.body; 
+    final String responseBody = response.body;
 
     if (response.statusCode == 200) {
       if (responseBody.isEmpty || responseBody == 'null') {
@@ -84,7 +80,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final json = jsonDecode(responseBody);
 
-      print('DEBUG: [Login] Parsing LoginResponseModel...');
+      authLocalDatasource.saveToken(json['data']['token'] as String);
+
       return LoginResponseModel.fromJson(json);
     } else {
       String errorMessage = 'Login failed';
@@ -108,25 +105,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         }
       }
 
-      print('DEBUG: [Login] Throwing Exception: $errorMessage');
       throw Exception(errorMessage);
     }
   }
 
   @override
   Future<void> verifyEmail(String email, String code) async {
-    print('DEBUG: Verification req: $email, $code');
-
     final response = await client.post(
-      Uri.parse('$baseUrl/verify'),
+      Uri.parse('$authUrl/verify'),
       headers: _authHeaders(),
       body: jsonEncode({'email': email, 'code': code}),
     );
-
-    // --- DEBUGGING START ---
-    print('DEBUG: Verification Status Code: ${response.statusCode}');
-    print('DEBUG: Verification Response Body: ${response.body}');
-    // --- DEBUGGING END ---
 
     if (response.statusCode != 200) {
       final json = jsonDecode(response.body);
@@ -135,17 +124,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<UserModel> getUserProfile() async {
+  Future<UserModel> getUserProfile(String token) async {
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+
     final response = await client.get(
-      Uri.parse('$baseUrl/user'),
-      headers: _authHeaders(),
+      Uri.parse('$profileUrl'),
+      headers: headers,
     );
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      return UserModel.fromJson(json['data'] ?? json);
+      if (json.containsKey('data') && json['data'] != null) {
+        return UserModel.fromJson(json['data'] as Map<String, dynamic>);
+      } else {
+        return UserModel.fromJson(json as Map<String, dynamic>);
+      }
+    } else if (response.statusCode == 401 || response.statusCode == 403) {
+      throw Exception('Token otorisasi tidak valid atau kadaluarsa.');
     } else {
-      throw Exception('Failed to load profile');
+      throw Exception(
+        'Gagal memuat profil (Status ${response.statusCode}): ${response.body}',
+      );
     }
   }
 }

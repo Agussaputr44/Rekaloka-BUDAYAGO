@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../common/constants.dart';
-import 'login_page.dart';
-import 'verification_page.dart';
-import '../../provider/auth_notifier.dart';
-
 import '../../../common/state.dart';
+import '../../provider/auth_notifier.dart';
+import 'verification_page.dart';
+import 'login_page.dart';
 
-const Color _inputFillColor = Color(0xFFE2B79A); 
+const Color _inputFillColor = Color(0xFFE2B79A);
 
 class RegisterPage extends StatefulWidget {
-  static const ROUTE_NAME = '/sign-up';
+  static const ROUTE_NAME = '/register';
   const RegisterPage({super.key});
 
   @override
@@ -22,7 +21,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
-  
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -35,61 +34,88 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     final authState = context.select((AuthNotifier n) => n.authState);
     final errorMessage = context.select((AuthNotifier n) => n.message);
+    final isRegisterSuccess = context.select(
+      (AuthNotifier n) => n.isRegisterSuccess,
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (authState == RequestState.Loaded) {
-        print('Navigating to VerificationPage with email: ${_emailController.text}');
-        Navigator.of(context).pushReplacementNamed(
-        
-          VerificationPage.ROUTE_NAME, 
-          arguments: _emailController.text,
-        );
+      if (authState == RequestState.Loaded && isRegisterSuccess) {
+        Future.microtask(() {
+          context.read<AuthNotifier>().resetAuthState();
+
+          Navigator.of(context).pushReplacementNamed(
+            VerificationPage.ROUTE_NAME,
+            arguments: _emailController.text,
+          );
+        });
       } else if (authState == RequestState.Error && errorMessage.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
+        Future.microtask(() => context.read<AuthNotifier>().resetAuthState());
       }
     });
 
     return Scaffold(
-      backgroundColor: kPrimaryBrown, 
+      backgroundColor: kPrimaryBrown,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- HEADER ---
             _buildHeader(context),
-            // --- FORM ---
             _buildForm(authState == RequestState.Loading),
-            // --- FOOTER DENGAN ORNAMEN BATIK ---
             _buildFooter(context),
           ],
         ),
       ),
     );
   }
-  
 
   Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(top: 50, left: 24, right: 24, bottom: 30),
+      padding: const EdgeInsets.only(top: 50, left: 24, right: 24, bottom: 50),
       color: kPrimaryBrown,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, 
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Panah kembali
           Row(
             children: [
               IconButton(
                 icon: const Icon(Icons.arrow_back_ios, color: kTextWhite),
                 onPressed: () => Navigator.pop(context),
               ),
-              const Spacer(), 
+              const Spacer(),
+              Text("Registrasi", style: kHeading5.copyWith(color: kTextWhite)),
+              const Spacer(flex: 2),
             ],
           ),
-          
-          const SizedBox(height: 20),
-          Text("Registrasi", style: kHeading5.copyWith(color: kTextWhite)), 
-          const SizedBox(height: 8), 
-          Text("Buat akun baru kamu", style: kSubtitle.copyWith(color: kTextWhite)), 
+          const SizedBox(height: 30),
+          Center(
+            child: Text(
+              "Buat Akun Baru",
+              style: kHeading5.copyWith(color: kTextWhite),
+            ),
+          ),
+          Center(
+            child: Text.rich(
+              TextSpan(
+                text: "Sobat ",
+                style: kHeadingRekaloka.copyWith(
+                  fontSize: 32,
+                  color: kTextWhite,
+                ),
+                children: [
+                  TextSpan(
+                    text: "Rekaloka",
+                    style: kHeadingRekaloka.copyWith(
+                      fontSize: 32,
+                      color: kAccentOrange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -100,53 +126,99 @@ class _RegisterPageState extends State<RegisterPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
-        color: kScaffoldBackground, 
+        color: kScaffoldBackground,
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Input Username
           _buildInputField(
-            _usernameController, 
-            'username', 
+            _usernameController,
+            'Username',
             Icons.person_outline,
           ),
           const SizedBox(height: 16),
-          // Input Email
-          _buildInputField(
-            _emailController, 
-            'Email', 
-            Icons.email_outlined,
-          ),
+          _buildInputField(_emailController, 'Email', Icons.email_outlined),
           const SizedBox(height: 16),
-          // Input Password
           _buildInputField(
-            _passwordController, 
-            '.......', 
+            _passwordController,
+            'Password',
             Icons.lock_outline,
             isPassword: true,
           ),
-          const SizedBox(height: 32),
-          // Tombol Daftar
+          const SizedBox(height: 16),
           ElevatedButton(
             onPressed: isLoading ? null : _handleRegister,
             style: ElevatedButton.styleFrom(
-              backgroundColor: kAccentOrange, 
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              backgroundColor: kPrimaryBrown,
               minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            child: isLoading 
+            child: isLoading
                 ? const CircularProgressIndicator(color: kTextWhite)
-                : Text("Daftar", style: kButtonText.copyWith(color: kTextWhite)),
+                : Text(
+                    "Daftar",
+                    style: kButtonText.copyWith(color: kTextWhite),
+                  ),
           ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Sudah punya akun?",
+                style: kBodyText.copyWith(color: kPrimaryBrown),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(
+                  context,
+                ).pushReplacementNamed(LoginPage.ROUTE_NAME),
+                child: Text(
+                  "Masuk",
+                  style: kButtonText.copyWith(color: kAccentOrange),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.width * 0.40,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: -MediaQuery.of(context).size.width * 0.18,
+                  top: 80,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.30,
+                    height: MediaQuery.of(context).size.width * 0.30,
+                    child: Image.asset('assets/images/logo_awan.png'),
+                  ),
+                ),
+                Positioned(
+                  right: -MediaQuery.of(context).size.width * 0.18,
+                  top: 0,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.30,
+                    height: MediaQuery.of(context).size.width * 0.30,
+                    child: Image.asset('assets/images/logo_awan.png'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 150),
         ],
       ),
     );
   }
 
   Widget _buildInputField(
-    TextEditingController controller, 
-    String hint, 
+    TextEditingController controller,
+    String hint,
     IconData icon, {
     bool isPassword = false,
   }) {
@@ -163,23 +235,29 @@ class _RegisterPageState extends State<RegisterPage> {
       child: TextField(
         controller: controller,
         obscureText: isPassword && !_isPasswordVisible,
-        style: kBodyText.copyWith(color: kPrimaryBrown), 
+        style: kBodyText.copyWith(color: kPrimaryBrown),
         decoration: InputDecoration(
           filled: true,
-          fillColor: _inputFillColor, 
+          fillColor: _inputFillColor,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none, 
+            borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
-
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 10,
+          ),
           hintText: hint,
-          hintStyle: kBodyText.copyWith(color: kInputIconColor.withOpacity(0.7)),
+          hintStyle: kBodyText.copyWith(
+            color: kInputIconColor.withOpacity(0.7),
+          ),
           prefixIcon: Icon(icon, color: kInputIconColor),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
-                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    _isPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                     color: kInputIconColor,
                   ),
                   onPressed: () {
@@ -195,10 +273,19 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _handleRegister() {
+    if (_usernameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Semua bidang harus diisi')));
+      return;
+    }
+
     final notifier = context.read<AuthNotifier>();
     notifier.registerUser(
-      _emailController.text, 
-      _passwordController.text, 
+      _emailController.text,
+      _passwordController.text,
       _usernameController.text,
     );
   }
@@ -206,36 +293,24 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _buildFooter(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: kScaffoldBackground, 
+      color: kScaffoldBackground,
       padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text("Sudah punya akun?", style: kBodyText.copyWith(color: kPrimaryBrown)),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacementNamed(LoginPage.ROUTE_NAME);
-                },
-                child: Text(
-                  "Masuk",
-                  style: kButtonText.copyWith(color: kAccentOrange),
-                ),
-              ),
-            ],
+          Text(
+            "Sudah punya akun?",
+            style: kBodyText.copyWith(color: kPrimaryBrown),
           ),
-          // const SizedBox(height: 50), 
-          // // Ornamen Batik (Jika ada gambar aset)
-          // // Image.asset('assets/images/logo_awan.png', height: 100),
-          // // Tambahkan ornamen batik di sini jika Anda memilikinya di assets
-          // // Untuk saat ini, kita bisa menambahkan Placeholder atau Container kosong
-          // // agar ada ruang yang cukup.
-          // Container(
-          //   height: 100, // Sesuaikan tinggi ornamen batik Anda
-          //   width: double.infinity,
-          //   // child: Image.asset('assets/images/logo_awan.png', fit: BoxFit.fitWidth), // Contoh
-          // ),
+          TextButton(
+            onPressed: () => Navigator.of(
+              context,
+            ).pushReplacementNamed(LoginPage.ROUTE_NAME),
+            child: Text(
+              "Masuk",
+              style: kButtonText.copyWith(color: kAccentOrange),
+            ),
+          ),
         ],
       ),
     );

@@ -133,30 +133,25 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _startNavigation() async {
     // 1. Tunggu Animasi Selesai (2.5 detik untuk buffer)
-    print('DEBUG: [Splash] 1. _startNavigation DIPANGGIL.'); // Tanda 1
-
     await Future.delayed(const Duration(milliseconds: 2500));
 
     if (!mounted) return;
 
     final authNotifier = context.read<AuthNotifier>();
 
-    print('DEBUG: [Splash] 2. Memanggil checkAuthStatus...'); // Tanda 2
-
-    // KEMUNGKINAN STUCK DI SINI!
+    // ⭐ [FUNGSI AUTO-LOGIN] Panggil checkAuthStatus untuk memverifikasi token.
+    // authNotifier akan mengupdate authState menjadi Loaded jika token valid.
     await authNotifier.checkAuthStatus();
-
-    print('DEBUG: [Splash] 3. checkAuthStatus SELESAI.'); // Tanda 3
 
     if (!mounted) return;
 
+    // ⭐ [LOGIKA NAVIGASI SUDAH BENAR]
+    // Jika authState = Loaded dan user ada, arahkan ke Home Page.
     final String destinationRoute =
         authNotifier.authState == RequestState.Loaded &&
             authNotifier.user != null
         ? HomePage.ROUTE_NAME
         : LoginPage.ROUTE_NAME;
-
-    print('DEBUG: [Splash] 4. Tujuan Navigasi: $destinationRoute'); // Tanda 4
 
     // 4. Navigasi ke rute tujuan
     Navigator.of(context).pushReplacement(

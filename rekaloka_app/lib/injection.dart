@@ -1,11 +1,14 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http; // Asumsi: Menggunakan http.Client
+import 'package:rekaloka_app/domain/usecases/auth/get_token_user.dart';
+import 'package:rekaloka_app/domain/usecases/auth/remember_me.dart';
+import 'package:rekaloka_app/domain/usecases/auth/save_token_user.dart';
 import 'presentation/provider/auth_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Import Data Layer
 import 'data/datasources/auth_remote_datasource.dart';
-import 'data/datasources/local/token_local_datasource.dart';
+import 'data/datasources/local/auth_local_datasource.dart';
 import 'data/repositories/auth_repository_impl.dart';
 
 // Import Domain Layer
@@ -19,54 +22,54 @@ final sl = GetIt.instance;
 
 Future<void> init() async {
   // =======================================================
-  // A. EXTERNAL / CORE UTILITIES (PALING DASAR)
+  // A. EXTERNAL / CORE UTILITIES
   // =======================================================
-  // 1. HTTP Client
-  // Ini adalah objek 'Client' yang error cari sebelumnya. Harus didaftarkan duluan.
   sl.registerLazySingleton(() => http.Client());
-  final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-  
+  final SharedPreferences sharedPreferences =
+      await SharedPreferences.getInstance();
+
   // =======================================================
-  // B. DATA SOURCES (Mendukung Repository)
+  // B. DATA SOURCES
   // =======================================================
-  // 2. Token Local Data Source (Harus ada implementasi!)
-  sl.registerLazySingleton<TokenLocalDataSource>(
-    // Ganti dengan implementasi actual Anda, misalnya TokenLocalDataSourceImpl(sharedPreferences: sl())
-    () => TokenLocalDataSourceImpl(prefs: sharedPreferences), 
+  sl.registerLazySingleton<AuthLocalDatasource>(
+    () => AuthLocalDatasourceImpl(prefs: sharedPreferences),
   );
 
-  // 3. Remote Data Source (Membutuhkan Client & TokenLocalDataSource)
+  // 3. Remote Data Source (
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(client: sl(), tokenLocalDataSource: sl()),
+    () => AuthRemoteDataSourceImpl(client: sl(), authLocalDatasource: sl()),
   );
 
   // =======================================================
-  // C. REPOSITORY (Mendukung Use Cases)
+  // C. REPOSITORY
   // =======================================================
-  // 4. Auth Repository (Membutuhkan Remote & Local Data Source)
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(remoteDataSource: sl(), tokenLocalDataSource: sl()),
+    () => AuthRepositoryImpl(remoteDataSource: sl(), authLocalDatasource: sl()),
   );
 
   // =======================================================
   // D. USE CASES (Mendukung Notifier)
   // =======================================================
-  // 5. Use Cases (Membutuhkan AuthRepository)
   sl.registerLazySingleton(() => Register(sl()));
   sl.registerLazySingleton(() => Login(sl()));
   sl.registerLazySingleton(() => GetUserProfile(sl()));
   sl.registerLazySingleton(() => VerifyEmail(sl()));
+  sl.registerLazySingleton(() => GetTokenUser(sl()));
+  sl.registerLazySingleton(() => SaveTokenUser(sl()));
+  sl.registerLazySingleton(() => RememberMe(sl()));
 
   // =======================================================
   // E. NOTIFIER (Layer Presentasi)
   // =======================================================
-  // 6. Auth Notifier (Membutuhkan semua Use Cases)
   sl.registerFactory(
     () => AuthNotifier(
       loginUseCase: sl(),
       registerUseCase: sl(),
       verifyEmailUseCase: sl(),
       getUserProfileUseCase: sl(),
+      getTokenUseCase: sl(),
+      saveTokenUseCase: sl(),
+      rememberMeUseCase: sl(),
     ),
   );
 }

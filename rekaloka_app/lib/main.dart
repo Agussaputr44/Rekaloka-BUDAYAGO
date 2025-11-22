@@ -89,7 +89,7 @@ class MyApp extends StatelessWidget {
                 builder: (_) {
                   return const Scaffold(
                     body: Center(
-                      child: Text('Error: Halaman tidak ditemukan (404)'),
+                      child: Text('Halaman tidak ditemukan:('),
                     ),
                   );
                 },

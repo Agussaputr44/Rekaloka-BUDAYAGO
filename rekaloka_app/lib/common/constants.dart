@@ -5,10 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 const Color kPrimaryBrown = Color(0xFF5C3317);
 const Color kAccentOrange = Color(0xFFD36A3C);
 const Color kTextWhite = Color(0xFFFFFFFF);
+const Color kTextBlack = Color.fromARGB(255, 0, 0, 0);
 const Color kInputBackground = Color(0xFFF7F7F7);
 const Color kInputIconColor = Color(0xFF946E56);
 const Color kSecondaryBrown = Color(0xFF8B4513);
-const Color kScaffoldBackground = Color(0xFFF0E5D7);
+const Color kScaffoldBackground = Color.fromARGB(255, 255, 255, 255);
+const Color kInputFillColor = Color(0xFFE2B79A);
 
 // --- Text Style ---
 final TextStyle kHeading1 = GoogleFonts.poppins(
