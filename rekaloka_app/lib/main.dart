@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rekaloka_app/presentation/provider/location_notifier.dart';
 import 'presentation/pages/auth/login_page.dart';
 import 'presentation/pages/auth/register_page.dart';
 import 'presentation/pages/auth/verification_page.dart';
@@ -23,7 +24,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => sl.sl<AuthNotifier>())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => sl.sl<AuthNotifier>()),
+        ChangeNotifierProvider(create: (_) => sl.sl<LocationNotifier>()),
+        ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Rekaloka App',

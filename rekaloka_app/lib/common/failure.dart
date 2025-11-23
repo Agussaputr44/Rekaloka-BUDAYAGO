@@ -10,13 +10,26 @@ abstract class Failure extends Equatable {
 }
 
 class ServerFailure extends Failure {
-  const ServerFailure(super.message);
+  const ServerFailure(String message) : super(message);
 }
 
 class ConnectionFailure extends Failure {
-  const ConnectionFailure(super.message);
+  const ConnectionFailure(String message) : super(message);
 }
 
 class DatabaseFailure extends Failure {
-  const DatabaseFailure(super.message);
+  const DatabaseFailure(String message) : super(message);
+}
+
+// Tambahan khusus untuk lokasi
+class LocationFailure extends Failure {
+  const LocationFailure(String message) : super(message);
+}
+
+class PermissionFailure extends Failure {
+  const PermissionFailure(String message) : super(message);
+}
+
+class ServiceDisabledFailure extends Failure {
+  const ServiceDisabledFailure(String message) : super(message);
 }

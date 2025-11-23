@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rekaloka_app/presentation/pages/Home/reconstruction_page.dart';
+import 'package:rekaloka_app/presentation/provider/location_notifier.dart';
 
 import '../../../common/constants.dart';
-import '../../../common/utils.dart';
 
 const List<Map<String, String>> _dummyData = [
   {
@@ -33,18 +34,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomePage> {
-  // Removed RouteAware mixin since we're using it in wrapper
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // Header tanpa SafeArea agar langsung dari atas
           const _LocationHeader(),
-          
-          // Konten dengan background putih dan rounded top
+
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -59,7 +56,6 @@ class _HomeViewState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hero Section (Kartu Utama)
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.0),
                       child: _HeroSection(),
@@ -67,7 +63,6 @@ class _HomeViewState extends State<HomePage> {
 
                     const SizedBox(height: 40),
 
-                    // Header Bagian (Budaya Terkait)
                     _SectionHeader(
                       title: 'Budaya Terkait dari Lokasimu',
                       onSeeAllTap: () {
@@ -86,36 +81,44 @@ class _HomeViewState extends State<HomePage> {
                         itemCount: const [
                           {
                             'title': 'Vihara Hok Ann Kiong',
-                            'address': 'Jl. Yos Sudarso No.124/F, Bengkalis Kota',
-                            'imageUrl': 'https://placehold.co/400x300/6A4C32/FFFFFF?text=Vihara',
+                            'address':
+                                'Jl. Yos Sudarso No.124/F, Bengkalis Kota',
+                            'imageUrl':
+                                'https://placehold.co/400x300/6A4C32/FFFFFF?text=Vihara',
                           },
                           {
                             'title': 'Rumah Adat Selaso Jatuh Kembar',
                             'address': 'Jl. Sudirman, Pekanbaru, Riau',
-                            'imageUrl': 'https://placehold.co/400x300/3E8D62/FFFFFF?text=Rumah+Adat',
+                            'imageUrl':
+                                'https://placehold.co/400x300/3E8D62/FFFFFF?text=Rumah+Adat',
                           },
                           {
                             'title': 'Istana Siak Sri Indrapura',
                             'address': 'Komp. Istana Siak, Siak, Riau',
-                            'imageUrl': 'https://placehold.co/400x300/4B778D/FFFFFF?text=Istana',
+                            'imageUrl':
+                                'https://placehold.co/400x300/4B778D/FFFFFF?text=Istana',
                           },
                         ].length,
                         itemBuilder: (context, index) {
                           final items = const [
                             {
                               'title': 'Vihara Hok Ann Kiong',
-                              'address': 'Jl. Yos Sudarso No.124/F, Bengkalis Kota',
-                              'imageUrl': 'https://placehold.co/400x300/6A4C32/FFFFFF?text=Vihara',
+                              'address':
+                                  'Jl. Yos Sudarso No.124/F, Bengkalis Kota',
+                              'imageUrl':
+                                  'https://placehold.co/400x300/6A4C32/FFFFFF?text=Vihara',
                             },
                             {
                               'title': 'Rumah Adat Selaso Jatuh Kembar',
                               'address': 'Jl. Sudirman, Pekanbaru, Riau',
-                              'imageUrl': 'https://placehold.co/400x300/3E8D62/FFFFFF?text=Rumah+Adat',
+                              'imageUrl':
+                                  'https://placehold.co/400x300/3E8D62/FFFFFF?text=Rumah+Adat',
                             },
                             {
                               'title': 'Istana Siak Sri Indrapura',
                               'address': 'Komp. Istana Siak, Siak, Riau',
-                              'imageUrl': 'https://placehold.co/400x300/4B778D/FFFFFF?text=Istana',
+                              'imageUrl':
+                                  'https://placehold.co/400x300/4B778D/FFFFFF?text=Istana',
                             },
                           ];
                           final item = items[index];
@@ -131,7 +134,6 @@ class _HomeViewState extends State<HomePage> {
 
                     const SizedBox(height: 40),
 
-                    // Leaderboard Section
                     _SectionHeader(
                       title: 'Leaderboard',
                       onSeeAllTap: () {
@@ -146,7 +148,7 @@ class _HomeViewState extends State<HomePage> {
                       child: _LeaderboardSection(),
                     ),
 
-                    const SizedBox(height: 80), // Extra space for bottom nav
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
@@ -158,7 +160,6 @@ class _HomeViewState extends State<HomePage> {
   }
 }
 
-// Widget Leaderboard Section
 class _LeaderboardSection extends StatelessWidget {
   const _LeaderboardSection();
 
@@ -175,7 +176,13 @@ class _LeaderboardSection extends StatelessWidget {
       {'name': 'Dinda Sari', 'level': 28, 'rank': 4, 'badge': 'explorer'},
       {'name': 'Fajar M', 'level': 25, 'rank': 5, 'badge': 'explorer'},
       {'name': 'Mia Tania', 'level': 19, 'rank': 6, 'badge': 'explorer'},
-      {'name': 'Kamu', 'level': 12, 'rank': 7, 'badge': 'beginner', 'isCurrentUser': true},
+      {
+        'name': 'Kamu',
+        'level': 12,
+        'rank': 7,
+        'badge': 'beginner',
+        'isCurrentUser': true,
+      },
       {'name': 'Lusi N', 'level': 9, 'rank': 8, 'badge': 'beginner'},
     ];
 
@@ -202,21 +209,17 @@ class _LeaderboardSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Rank 2
                 _buildPodiumItem(topThree[0], 2),
                 const SizedBox(width: 12),
-                // Rank 1
                 _buildPodiumItem(topThree[1], 1),
                 const SizedBox(width: 12),
-                // Rank 3
                 _buildPodiumItem(topThree[2], 3),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
-          // List of other users
+
           ...otherUsers.map((user) => _buildLeaderboardItem(user)),
         ],
       ),
@@ -225,13 +228,12 @@ class _LeaderboardSection extends StatelessWidget {
 
   Widget _buildPodiumItem(Map<String, dynamic> user, int rank) {
     final isFirst = rank == 1;
-    
+
     return SizedBox(
       width: 90,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Avatar with crown
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -241,10 +243,7 @@ class _LeaderboardSection extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white,
-                  border: Border.all(
-                    color: _getRankColor(rank),
-                    width: 3,
-                  ),
+                  border: Border.all(color: _getRankColor(rank), width: 3),
                 ),
                 child: Icon(
                   Icons.person,
@@ -265,10 +264,9 @@ class _LeaderboardSection extends StatelessWidget {
                 ),
             ],
           ),
-          
+
           const SizedBox(height: 6),
-          
-          // Name
+
           Text(
             user['name'].toString(),
             style: kBodyText.copyWith(
@@ -280,10 +278,9 @@ class _LeaderboardSection extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          
+
           const SizedBox(height: 4),
-          
-          // Badge
+
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
@@ -296,10 +293,9 @@ class _LeaderboardSection extends StatelessWidget {
               color: _getRankColor(rank),
             ),
           ),
-          
+
           const SizedBox(height: 6),
-          
-          // Level
+
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
@@ -322,7 +318,7 @@ class _LeaderboardSection extends StatelessWidget {
 
   Widget _buildLeaderboardItem(Map<String, dynamic> user) {
     final isCurrentUser = user['isCurrentUser'] == true;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -335,18 +331,12 @@ class _LeaderboardSection extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Star for current user
           if (isCurrentUser)
             Padding(
               padding: const EdgeInsets.only(right: 6),
-              child: Icon(
-                Icons.star,
-                color: kAccentOrange,
-                size: 18,
-              ),
+              child: Icon(Icons.star, color: kAccentOrange, size: 18),
             ),
-          
-          // Rank
+
           SizedBox(
             width: 25,
             child: Text(
@@ -358,10 +348,9 @@ class _LeaderboardSection extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(width: 8),
-          
-          // Avatar
+
           Container(
             width: 32,
             height: 32,
@@ -375,9 +364,9 @@ class _LeaderboardSection extends StatelessWidget {
               color: kPrimaryBrown.withOpacity(0.3),
             ),
           ),
-          
+
           const SizedBox(width: 10),
-          
+
           // Name
           Expanded(
             child: Text(
@@ -389,7 +378,7 @@ class _LeaderboardSection extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Badge icon
           Container(
             padding: const EdgeInsets.all(6),
@@ -403,14 +392,16 @@ class _LeaderboardSection extends StatelessWidget {
               color: _getBadgeColor(user['badge']),
             ),
           ),
-          
+
           const SizedBox(width: 10),
-          
+
           // Level
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: isCurrentUser ? kAccentOrange : Colors.white.withOpacity(0.9),
+              color: isCurrentUser
+                  ? kAccentOrange
+                  : Colors.white.withOpacity(0.9),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -476,15 +467,28 @@ class _LeaderboardSection extends StatelessWidget {
 // ## Sub-Widgets
 // ------------------------------------
 
-// Widget Header Lokasi
-class _LocationHeader extends StatelessWidget {
+class _LocationHeader extends StatefulWidget {
   const _LocationHeader();
 
   @override
+  State<_LocationHeader> createState() => _LocationHeaderState();
+}
+
+class _LocationHeaderState extends State<_LocationHeader> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<LocationNotifier>(context, listen: false).fetchLocation();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final provider = context.watch<LocationNotifier>();
+
     return Container(
       width: double.infinity,
-      // Tambahkan padding top untuk status bar
       padding: EdgeInsets.fromLTRB(
         16,
         MediaQuery.of(context).padding.top + 16,
@@ -516,19 +520,12 @@ class _LocationHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Kolom untuk "Rekaloka" dan "Riau"
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(
-                          Icons.location_pin,
-                          color: kTextWhite,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 4),
                         Text(
                           'Rekaloka',
                           style: kHeadingRekaloka.copyWith(
@@ -540,16 +537,52 @@ class _LocationHeader extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 22),
-                      child: Text(
-                        'Riau',
-                        style: kBodyText.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: kTextWhite.withOpacity(0.85),
+
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_pin,
+                          color: kTextWhite,
+                          size: 18,
                         ),
-                      ),
+                        const SizedBox(width: 2),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 22),
+                          child: provider.loading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : provider.addressName != null
+                              ? Text(
+                                  provider
+                                      .addressName!, 
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: kTextWhite,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                              : provider.failure != null
+                              ? Text(
+                                  "Gagal mengambil lokasi.",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: kTextWhite,
+                                  ),
+                                )
+                              : const Text(
+                                  "Mengambil lokasi...",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: kTextWhite,
+                                  ),
+                                ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -602,7 +635,6 @@ class _HeroSection extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Bagian Kiri: Teks dan Tombol
           Expanded(
             flex: 7,
             child: Column(
@@ -622,10 +654,7 @@ class _HeroSection extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        kAccentOrange,
-                        kAccentOrange.withOpacity(0.8),
-                      ],
+                      colors: [kAccentOrange, kAccentOrange.withOpacity(0.8)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -640,8 +669,9 @@ class _HeroSection extends StatelessWidget {
                   ),
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pushNamed(ReconstructionPage.ROUTE_NAME);
-                      // print('Mulai Rekonstruksi tapped');
+                      Navigator.of(
+                        context,
+                      ).pushNamed(ReconstructionPage.ROUTE_NAME);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
@@ -674,9 +704,9 @@ class _HeroSection extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const SizedBox(width: 8),
-          
+
           // Bagian Kanan: Gambar Wayang
           Expanded(
             flex: 4,

@@ -1,54 +1,66 @@
 import 'package:get_it/get_it.dart';
-import 'package:http/http.dart' as http; // Asumsi: Menggunakan http.Client
+import 'package:http/http.dart' as http;
+import 'package:rekaloka_app/data/datasources/local/location_datarources.dart';
+import 'package:rekaloka_app/domain/usecases/location/get_addres.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// AUTH
 import 'package:rekaloka_app/domain/usecases/auth/get_token_user.dart';
 import 'package:rekaloka_app/domain/usecases/auth/remember_me.dart';
 import 'package:rekaloka_app/domain/usecases/auth/save_token_user.dart';
 import 'presentation/provider/auth_notifier.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-// Import Data Layer
 import 'data/datasources/auth_remote_datasource.dart';
 import 'data/datasources/local/auth_local_datasource.dart';
 import 'data/repositories/auth_repository_impl.dart';
-
-// Import Domain Layer
 import 'domain/repositories/auth_repository.dart';
 import 'domain/usecases/auth/get_user_profile.dart';
 import 'domain/usecases/auth/login.dart';
 import 'domain/usecases/auth/register.dart';
 import 'domain/usecases/auth/verify_email.dart';
 
+// LOCATION
+import 'package:rekaloka_app/domain/usecases/location/get_user_location.dart';
+import 'package:rekaloka_app/presentation/provider/location_notifier.dart';
+import 'package:rekaloka_app/data/repositories/location_repository_impl.dart';
+import 'package:rekaloka_app/domain/repositories/location_repository.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
   // =======================================================
-  // A. EXTERNAL / CORE UTILITIES
+  // A. EXTERNAL
   // =======================================================
   sl.registerLazySingleton(() => http.Client());
-  final SharedPreferences sharedPreferences =
-      await SharedPreferences.getInstance();
+
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton(() => sharedPreferences);
 
   // =======================================================
-  // B. DATA SOURCES
+  // B. AUTH DATA SOURCES
   // =======================================================
   sl.registerLazySingleton<AuthLocalDatasource>(
-    () => AuthLocalDatasourceImpl(prefs: sharedPreferences),
+    () => AuthLocalDatasourceImpl(prefs: sl()),
   );
 
-  // 3. Remote Data Source (
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(client: sl(), authLocalDatasource: sl()),
+    () => AuthRemoteDataSourceImpl(
+      client: sl(),
+      authLocalDatasource: sl(),
+    ),
   );
 
   // =======================================================
-  // C. REPOSITORY
+  // C. AUTH REPOSITORY
   // =======================================================
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(remoteDataSource: sl(), authLocalDatasource: sl()),
+    () => AuthRepositoryImpl(
+      remoteDataSource: sl(),
+      authLocalDatasource: sl(),
+    ),
   );
 
   // =======================================================
-  // D. USE CASES (Mendukung Notifier)
+  // D. AUTH USE CASES
   // =======================================================
   sl.registerLazySingleton(() => Register(sl()));
   sl.registerLazySingleton(() => Login(sl()));
@@ -59,7 +71,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => RememberMe(sl()));
 
   // =======================================================
-  // E. NOTIFIER (Layer Presentasi)
+  // E. AUTH NOTIFIER
   // =======================================================
   sl.registerFactory(
     () => AuthNotifier(
@@ -72,4 +84,35 @@ Future<void> init() async {
       rememberMeUseCase: sl(),
     ),
   );
+
+  // =======================================================
+  // F. LOCATION DATA SOURCES
+  // =======================================================
+  sl.registerLazySingleton<LocationDataSource>(
+    () => LocationDataSourceImpl(),
+  );
+
+  // =======================================================
+  // G. LOCATION REPOSITORY
+  // =======================================================
+  sl.registerLazySingleton<LocationRepository>(
+    () => LocationRepositoryImpl(sl()),
+  );
+
+  // =======================================================
+  // H. LOCATION USE CASES
+  // =======================================================
+  sl.registerLazySingleton(() => GetUserLocation(sl()));
+  sl.registerLazySingleton(() => GetAddressFromCoordinates(sl()));
+
+  // =======================================================
+  // I. LOCATION NOTIFIER
+  // =======================================================
+  sl.registerFactory(
+  () => LocationNotifier(
+    
+    sl(),
+    sl() 
+  ),
+);
 }
