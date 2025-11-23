@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rekaloka_app/presentation/pages/onboarding_page.dart';
 import '../../common/constants.dart';
 import 'Home/home_page.dart';
 import 'auth/login_page.dart';
@@ -18,7 +19,6 @@ class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   bool _isLogoVisible = false;
 
-  // Controllers dan Animasi gabungan (Intro + Floating)
   late final AnimationController _cloudController1;
   late final Animation<Offset> _cloudAnimation1;
   late final AnimationController _cloudController2;
@@ -32,7 +32,6 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Inisialisasi Controllers Awan
     _cloudController1 = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
@@ -50,8 +49,6 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(seconds: 4),
     );
 
-    // Animasi Awan
-    // Awan 1 (Kiri Atas): Masuk dari kiri, melayang ke kanan-bawah
     _cloudAnimation1 =
         Tween<Offset>(
           begin: const Offset(-1.0, -0.2),
@@ -60,7 +57,6 @@ class _SplashScreenState extends State<SplashScreen>
           CurvedAnimation(parent: _cloudController1, curve: Curves.easeOut),
         );
 
-    // Awan 2 (Kanan Atas)
     _cloudAnimation2 =
         Tween<Offset>(
           begin: const Offset(1.0, -0.2),
@@ -69,7 +65,6 @@ class _SplashScreenState extends State<SplashScreen>
           CurvedAnimation(parent: _cloudController2, curve: Curves.easeOut),
         );
 
-    // Awan 3 (Kiri Bawah)
     _cloudAnimation3 =
         Tween<Offset>(
           begin: const Offset(-1.0, 0.2),
@@ -78,7 +73,6 @@ class _SplashScreenState extends State<SplashScreen>
           CurvedAnimation(parent: _cloudController3, curve: Curves.easeOut),
         );
 
-    // Awan 4 (Kanan Bawah)
     _cloudAnimation4 =
         Tween<Offset>(
           begin: const Offset(1.0, 0.2),
@@ -87,7 +81,6 @@ class _SplashScreenState extends State<SplashScreen>
           CurvedAnimation(parent: _cloudController4, curve: Curves.easeOut),
         );
 
-    // Fase 1: Logo Muncul
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
@@ -96,10 +89,8 @@ class _SplashScreenState extends State<SplashScreen>
       }
     });
 
-    // Fase 2: Awan Masuk dan Mulai Melayang
     Future.delayed(const Duration(milliseconds: 1000), () {
       if (mounted) {
-        // Memulai animasi masuk
         _cloudController1.forward();
         Future.delayed(
           const Duration(milliseconds: 300),
@@ -111,7 +102,6 @@ class _SplashScreenState extends State<SplashScreen>
         );
         Future.delayed(const Duration(milliseconds: 900), () {
           _cloudController4.forward().whenComplete(() {
-            // Setelah semua awan masuk, mulai animasi melayang (looping)
             _cloudController1.repeat(reverse: true);
             _cloudController2.repeat(reverse: true);
             _cloudController3.repeat(reverse: true);
@@ -121,48 +111,39 @@ class _SplashScreenState extends State<SplashScreen>
       }
     });
 
-    // CATATAN: Panggilan navigasi dipindahkan ke didChangeDependencies -> _startNavigation
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Panggil fungsi navigasi kondisional (lebih aman untuk context.read)
     _startNavigation();
   }
 
   void _startNavigation() async {
-    // 1. Tunggu Animasi Selesai (2.5 detik untuk buffer)
     await Future.delayed(const Duration(milliseconds: 2500));
 
     if (!mounted) return;
 
     final authNotifier = context.read<AuthNotifier>();
 
-    // ⭐ [FUNGSI AUTO-LOGIN] Panggil checkAuthStatus untuk memverifikasi token.
-    // authNotifier akan mengupdate authState menjadi Loaded jika token valid.
     await authNotifier.checkAuthStatus();
 
     if (!mounted) return;
 
-    // ⭐ [LOGIKA NAVIGASI SUDAH BENAR]
-    // Jika authState = Loaded dan user ada, arahkan ke Home Page.
     final String destinationRoute =
         authNotifier.authState == RequestState.Loaded &&
             authNotifier.user != null
         ? HomePage.ROUTE_NAME
-        : LoginPage.ROUTE_NAME;
+        : OnboardingPage.ROUTE_NAME;
 
-    // 4. Navigasi ke rute tujuan
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 1000),
         pageBuilder: (context, animation, secondaryAnimation) {
-          // Menggunakan logika if-else untuk mengembalikan instance widget
           if (destinationRoute == HomePage.ROUTE_NAME) {
             return const HomePage();
           } else {
-            return const LoginPage();
+            return const OnboardingPage();
           }
         },
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -191,9 +172,6 @@ class _SplashScreenState extends State<SplashScreen>
       body: Stack(
         alignment: Alignment.center,
         children: [
-          // ----------------------------------------------------
-          // Awan 1 (Kiri Atas)
-          // ----------------------------------------------------
           AnimatedBuilder(
             animation: _cloudAnimation1,
             builder: (context, child) {
@@ -207,7 +185,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                   child: Image.asset(
                     'assets/images/logo_awan.png',
-                    width: screenWidth * 0.45, // Ukuran awan disesuaikan
+                    width: screenWidth * 0.45,
                     height: screenWidth * 0.45,
                   ),
                 ),
@@ -215,8 +193,6 @@ class _SplashScreenState extends State<SplashScreen>
             },
           ),
 
-          // ----------------------------------------------------
-          // Awan 2 (Kanan Atas)
           // ----------------------------------------------------
           AnimatedBuilder(
             animation: _cloudAnimation2,
@@ -239,9 +215,6 @@ class _SplashScreenState extends State<SplashScreen>
             },
           ),
 
-          // ----------------------------------------------------
-          // Awan 3 (Kiri Bawah)
-          // ----------------------------------------------------
           AnimatedBuilder(
             animation: _cloudAnimation3,
             builder: (context, child) {
@@ -263,9 +236,6 @@ class _SplashScreenState extends State<SplashScreen>
             },
           ),
 
-          // ----------------------------------------------------
-          // Awan 4 (Kanan Bawah)
-          // ----------------------------------------------------
           AnimatedBuilder(
             animation: _cloudAnimation4,
             builder: (context, child) {
@@ -287,9 +257,6 @@ class _SplashScreenState extends State<SplashScreen>
             },
           ),
 
-          // ----------------------------------------------------
-          // Logo dan Nama Aplikasi (di tengah)
-          // ----------------------------------------------------
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

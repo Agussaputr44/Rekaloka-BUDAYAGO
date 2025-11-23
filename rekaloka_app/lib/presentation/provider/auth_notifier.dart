@@ -179,19 +179,19 @@ class AuthNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _loadRememberMeStatus() async {
-    final result = await rememberMeUseCase.getRememberMeStatus();
+  // Future<void> _loadRememberMeStatus() async {
+  //   final result = await rememberMeUseCase.getRememberMeStatus();
 
-    result.fold(
-      (failure) {
-      },
-      (data) {
-        _rememberMe = data['status'] as bool;
-        _rememberedEmail = data['email'] as String?;
-      },
-    );
-    notifyListeners();
-  }
+  //   result.fold(
+  //     (failure) {
+  //     },
+  //     (data) {
+  //       _rememberMe = data['status'] as bool;
+  //       _rememberedEmail = data['email'] as String?;
+  //     },
+  //   );
+  //   notifyListeners();
+  // }
 
   void setRememberMe(bool value) {
     _rememberMe = value;

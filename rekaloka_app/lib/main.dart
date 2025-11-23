@@ -4,6 +4,7 @@ import 'presentation/pages/auth/login_page.dart';
 import 'presentation/pages/auth/register_page.dart';
 import 'presentation/pages/auth/verification_page.dart';
 import 'presentation/pages/home/home_page.dart';
+import 'presentation/pages/home/reconstruction_page.dart';
 import 'presentation/provider/auth_notifier.dart';
 import 'common/constants.dart';
 import 'common/utils.dart';
@@ -75,6 +76,9 @@ class MyApp extends StatelessWidget {
 
             case LoginPage.ROUTE_NAME:
               return MaterialPageRoute(builder: (_) => const LoginPage());
+
+            case ReconstructionPage.ROUTE_NAME:
+              return MaterialPageRoute(builder: (_) => const ReconstructionPage());
 
             case VerificationPage.ROUTE_NAME:
               final email = arguments is String ? arguments : '';

@@ -217,17 +217,17 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: kTextWhite),
-                onPressed: () => Navigator.pop(context),
-              ),
-              const Spacer(),
-              Text("Masuk", style: kHeading5.copyWith(color: kTextWhite)),
-              const Spacer(flex: 2),
-            ],
-          ),
+          // Row(
+          //   children: [
+          //     // IconButton(
+          //     //   icon: const Icon(Icons.arrow_back_ios, color: kTextWhite),
+          //     //   onPressed: () => Navigator.pop(context),
+          //     // ),
+          //     const Spacer(),
+          //     Center(child: Text("Masuk", style: kHeading5.copyWith(color: kTextWhite))),
+          //     const Spacer(flex: 2),
+          //   ],
+          // ),
           const SizedBox(height: 30),
           Center(
             child: Text(
