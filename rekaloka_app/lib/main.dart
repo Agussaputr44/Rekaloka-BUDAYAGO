@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rekaloka_app/presentation/provider/ai_notifier.dart';
 import 'package:rekaloka_app/presentation/provider/location_notifier.dart';
 import 'presentation/pages/auth/login_page.dart';
 import 'presentation/pages/auth/register_page.dart';
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => sl.sl<AuthNotifier>()),
+        ChangeNotifierProvider(create: (_) => sl.sl<AiNotifier>()),
         ChangeNotifierProvider(create: (_) => sl.sl<LocationNotifier>()),
         ],
       child: MaterialApp(

@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
+import 'package:rekaloka_app/data/datasources/ai_remote_datasource.dart';
 import 'package:rekaloka_app/data/datasources/local/location_datarources.dart';
 import 'package:rekaloka_app/domain/usecases/location/get_addres.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,6 +25,12 @@ import 'package:rekaloka_app/presentation/provider/location_notifier.dart';
 import 'package:rekaloka_app/data/repositories/location_repository_impl.dart';
 import 'package:rekaloka_app/domain/repositories/location_repository.dart';
 
+// AI (BARU)
+import 'package:rekaloka_app/data/repositories/ai_repository_impl.dart';
+import 'package:rekaloka_app/domain/repositories/ai_repository.dart';
+import 'package:rekaloka_app/domain/usecases/ai/text_to_image.dart';
+import 'package:rekaloka_app/presentation/provider/ai_notifier.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -43,20 +50,14 @@ Future<void> init() async {
   );
 
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(
-      client: sl(),
-      authLocalDatasource: sl(),
-    ),
+    () => AuthRemoteDataSourceImpl(client: sl(), authLocalDatasource: sl()),
   );
 
   // =======================================================
   // C. AUTH REPOSITORY
   // =======================================================
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(
-      remoteDataSource: sl(),
-      authLocalDatasource: sl(),
-    ),
+    () => AuthRepositoryImpl(remoteDataSource: sl(), authLocalDatasource: sl()),
   );
 
   // =======================================================
@@ -88,9 +89,7 @@ Future<void> init() async {
   // =======================================================
   // F. LOCATION DATA SOURCES
   // =======================================================
-  sl.registerLazySingleton<LocationDataSource>(
-    () => LocationDataSourceImpl(),
-  );
+  sl.registerLazySingleton<LocationDataSource>(() => LocationDataSourceImpl());
 
   // =======================================================
   // G. LOCATION REPOSITORY
@@ -108,11 +107,29 @@ Future<void> init() async {
   // =======================================================
   // I. LOCATION NOTIFIER
   // =======================================================
-  sl.registerFactory(
-  () => LocationNotifier(
-    
-    sl(),
-    sl() 
-  ),
-);
+  sl.registerFactory(() => LocationNotifier(sl(), sl()));
+
+  // =======================================================
+  // J. AI DATA SOURCES (BARU)
+  // =======================================================
+  sl.registerLazySingleton<AiRemoteDataSource>(
+    () => AiRemoteDataSourceImpl(client: sl(), authLocalDatasource: sl()),
+  );
+
+  // =======================================================
+  // K. AI REPOSITORY (BARU)
+  // =======================================================
+  sl.registerLazySingleton<AiRepository>(
+    () => AiRepositoryImpl(remoteDataSource: sl(), authLocalDatasource: sl()),
+  );
+
+  // =======================================================
+  // L. AI USE CASES (BARU)
+  // =======================================================
+  sl.registerLazySingleton(() => TextToImage(sl()));
+
+  // =======================================================
+  // M. AI NOTIFIER (BARU)
+  // =======================================================
+  sl.registerFactory(() => AiNotifier(textToImageUseCase: sl()));
 }

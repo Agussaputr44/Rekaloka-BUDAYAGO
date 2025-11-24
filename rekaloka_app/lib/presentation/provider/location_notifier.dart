@@ -5,11 +5,9 @@ import '../../common/failure.dart';
 import '../../domain/entities/location.dart';
 import '../../domain/usecases/location/get_addres.dart';
 import '../../domain/usecases/location/get_user_location.dart';
-// ⚠️ Pastikan ini ada:
 
 class LocationNotifier extends ChangeNotifier {
   final GetUserLocation getUserLocationUseCase;
-  // 💥 USE CASE BARU 💥
   final GetAddressFromCoordinates getAddressUseCase; 
 
   UserLocation? location;
@@ -17,7 +15,6 @@ class LocationNotifier extends ChangeNotifier {
   bool loading = false;
   String? addressName; 
 
-  // 💥 KONSTRUKTOR DIPERBARUI 💥
   LocationNotifier(this.getUserLocationUseCase, this.getAddressUseCase); 
 
   Future<void> fetchLocation() async {

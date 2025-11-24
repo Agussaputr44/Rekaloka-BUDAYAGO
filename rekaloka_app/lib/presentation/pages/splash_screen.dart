@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:rekaloka_app/presentation/pages/onboarding_page.dart';
 import '../../common/constants.dart';
 import 'Home/home_page.dart';
-import 'auth/login_page.dart';
 
 import '../../common/state.dart';
 import '../provider/auth_notifier.dart';
@@ -193,7 +192,6 @@ class _SplashScreenState extends State<SplashScreen>
             },
           ),
 
-          // ----------------------------------------------------
           AnimatedBuilder(
             animation: _cloudAnimation2,
             builder: (context, child) {

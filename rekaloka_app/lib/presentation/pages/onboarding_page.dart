@@ -486,20 +486,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _buildPageIndicator(int index) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: _currentPage == index ? 24 : 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: _currentPage == index
-            ? kAccentOrange
-            : Colors.white.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
+//   Widget _buildPageIndicator(int index) {
+//     return AnimatedContainer(
+//       duration: const Duration(milliseconds: 300),
+//       margin: const EdgeInsets.symmetric(horizontal: 4),
+//       width: _currentPage == index ? 24 : 8,
+//       height: 8,
+//       decoration: BoxDecoration(
+//         color: _currentPage == index
+//             ? kAccentOrange
+//             : Colors.white.withOpacity(0.5),
+//         borderRadius: BorderRadius.circular(4),
+//       ),
+//     );
+//   }
 }
 
 class OnboardingContent {

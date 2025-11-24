@@ -1,18 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
+import 'dart:convert'; // Import untuk Base64 decoding
+import 'dart:typed_data'; // Import untuk Uint8List
+
 import '../../../common/constants.dart';
+import '../../provider/ai_notifier.dart';
+
+// Akses ke GetIt instance
+final sl = GetIt.instance;
+
+enum ChatAssetType {
+  text,
+  image2d,
+  model3d,
+  error,
+}
 
 class ChatMessage {
   final String text;
   final bool isUser;
-  final bool isGenerating3D;
-  final String? model3DUrl;
+  final ChatAssetType type;
+  final String? assetUrl; // Ini akan berisi Base64 string untuk gambar 2D
   final DateTime timestamp;
 
   ChatMessage({
     required this.text,
     required this.isUser,
-    this.isGenerating3D = false,
-    this.model3DUrl,
+    this.type = ChatAssetType.text,
+    this.assetUrl,
     required this.timestamp,
   });
 }
@@ -31,73 +47,14 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
   bool _showWelcome = true;
+  String? _lastPrompt; // Menyimpan prompt terakhir
+  String? _lastGeneratedImageUrl; // Menyimpan URL/Base64 dari gambar 2D terakhir
 
   @override
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _sendMessage() {
-    if (_textController.text.trim().isEmpty) return;
-
-    setState(() {
-      // Add user message
-      _messages.add(ChatMessage(
-        text: _textController.text,
-        isUser: true,
-        timestamp: DateTime.now(),
-      ));
-      _showWelcome = false;
-    });
-
-    final userText = _textController.text;
-    _textController.clear();
-    _isTyping = false;
-
-    // Scroll to bottom
-    Future.delayed(const Duration(milliseconds: 100), () {
-      _scrollToBottom();
-    });
-
-    // Simulate AI response
-    Future.delayed(const Duration(milliseconds: 800), () {
-      setState(() {
-        _messages.add(ChatMessage(
-          text: 'Baik! Saya akan membuat model 3D berdasarkan deskripsi Anda: "$userText". Mohon tunggu sebentar...',
-          isUser: false,
-          timestamp: DateTime.now(),
-        ));
-      });
-      _scrollToBottom();
-
-      // Simulate 3D generation
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() {
-          _messages.add(ChatMessage(
-            text: 'Model 3D sedang dibuat...',
-            isUser: false,
-            isGenerating3D: true,
-            timestamp: DateTime.now(),
-          ));
-        });
-        _scrollToBottom();
-
-        // Show 3D result
-        Future.delayed(const Duration(seconds: 3), () {
-          setState(() {
-            _messages.add(ChatMessage(
-              text: 'Model 3D berhasil dibuat! Anda bisa melihat, memutar, dan mengunduhnya.',
-              isUser: false,
-              model3DUrl: 'https://example.com/model.glb', // URL model 3D
-              timestamp: DateTime.now(),
-            ));
-          });
-          _scrollToBottom();
-        });
-      });
-    });
   }
 
   void _scrollToBottom() {
@@ -110,28 +67,158 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
     }
   }
 
+  void _start3DSimulation(String imageUrl2D) {
+    // Pesan AI: Gambar 2D berhasil, memulai konversi 3D
+    setState(() {
+      _messages.add(ChatMessage(
+        text: 'Gambar 2D berhasil dibuat. Sekarang, Rekaloka akan memulai proses konversi ke Model 3D. Mohon tunggu...',
+        isUser: false,
+        type: ChatAssetType.text,
+        timestamp: DateTime.now(),
+      ));
+      _messages.add(ChatMessage(
+        text: 'Model 3D sedang dibuat...',
+        isUser: false,
+        type: ChatAssetType.model3d, // Menggunakan model3d type untuk menampilkan indikator loading khusus
+        timestamp: DateTime.now(),
+      ));
+    });
+    _scrollToBottom();
+
+    // Simulasi Tahap 2: Konversi 2D ke 3D (Simulasi 3 detik)
+    Future.delayed(const Duration(seconds: 3), () {
+      setState(() {
+        // Hapus pesan loading 3D
+        _messages.removeWhere((msg) => msg.type == ChatAssetType.model3d && msg.text == 'Model 3D sedang dibuat...');
+
+        // Tampilkan hasil Model 3D (menggunakan URL dummy karena konversi 3D belum ada)
+        _messages.add(ChatMessage(
+          text: 'Model 3D berhasil direkonstruksi dari gambar 2D!',
+          isUser: false,
+          type: ChatAssetType.model3d,
+          assetUrl: 'https://example.com/model-${DateTime.now().microsecondsSinceEpoch}.glb', // URL model 3D dummy
+          timestamp: DateTime.now(),
+        ));
+      });
+      _scrollToBottom();
+    });
+  }
+
+  void _handleImageGenerationResult(AiNotifier notifier, String prompt) {
+    // Cek apakah state AI Notifier sudah berubah dan hasil untuk prompt terakhir sudah tersedia
+    // Ini mencegah memproses ulang hasil yang sama
+    if (notifier.loading == false && _lastPrompt == prompt) {
+      if (notifier.errorMessage != null) {
+        // Hapus pesan loading 2D jika ada
+        _messages.removeWhere((msg) => msg.text == 'Mengakses AI untuk membuat gambar...');
+
+        // Tampilkan pesan error
+        setState(() {
+          _messages.add(ChatMessage(
+            text: notifier.errorMessage!,
+            isUser: false,
+            type: ChatAssetType.error,
+            timestamp: DateTime.now(),
+          ));
+        });
+        _scrollToBottom();
+        notifier.clearState(); // Reset state setelah menampilkan error
+        _lastPrompt = null; // Reset prompt terakhir
+      } else if (notifier.imageUrl != null && notifier.imageUrl != _lastGeneratedImageUrl) {
+        // ✅ LOGGING: Pastikan kita mendapatkan Base64 String
+        print('✅ DEBUG: Gambar 2D berhasil didapatkan (Base64). Panjang: ${notifier.imageUrl!.length} karakter.');
+
+        // Hapus pesan loading 2D jika ada
+        _messages.removeWhere((msg) => msg.text == 'Mengakses AI untuk membuat gambar...');
+
+        // Tampilkan hasil Gambar 2D
+        setState(() {
+          _messages.add(ChatMessage(
+            text: 'Gambar 2D untuk "$prompt" berhasil dibuat.',
+            isUser: false,
+            type: ChatAssetType.image2d,
+            assetUrl: notifier.imageUrl, // Ini adalah Base64 String
+            timestamp: DateTime.now(),
+          ));
+          _lastGeneratedImageUrl = notifier.imageUrl; // Simpan untuk mencegah duplikasi
+        });
+        _scrollToBottom();
+
+        // Lanjutkan ke Tahap 2: Simulasi 3D (gunakan prompt asli, bukan Base64 string)
+        _start3DSimulation(prompt); // Atau jika 3D butuh gambar 2D, Anda bisa kirim Base64 string atau URL aslinya
+
+        // Reset state di AiNotifier setelah selesai
+        notifier.clearState();
+        _lastPrompt = null; // Reset prompt terakhir
+      }
+    }
+  }
+
+  void _sendMessage(AiNotifier notifier) {
+    if (_textController.text.trim().isEmpty) return;
+    if (notifier.loading) return; // Mencegah kirim saat loading
+
+    final userText = _textController.text;
+    _lastPrompt = userText; // Simpan prompt terakhir untuk error handling
+
+    setState(() {
+      // 1. Add user message
+      _messages.add(ChatMessage(
+        text: userText,
+        isUser: true,
+        timestamp: DateTime.now(),
+      ));
+      _showWelcome = false;
+    });
+
+    _textController.clear();
+    _isTyping = false;
+
+    // Scroll to bottom
+    Future.delayed(const Duration(milliseconds: 100), () => _scrollToBottom());
+
+    // 2. Panggil AI Use Case (Text-to-Image)
+    notifier.generateImage(userText);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // Header
-          _buildHeader(context),
-          
-          // Chat Messages Area
-          Expanded(
-            child: _showWelcome
-                ? _buildWelcomeScreen()
-                : _buildChatList(),
+    // 3. Watch state dari AiNotifier
+    return Consumer<AiNotifier>(
+      builder: (context, notifier, child) {
+        // Gunakan _handleImageGenerationResult untuk merespon perubahan state notifier
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_lastPrompt != null) {
+             _handleImageGenerationResult(notifier, _lastPrompt!);
+          }
+        });
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: Column(
+            children: [
+              // Header
+              _buildHeader(context),
+
+              // Chat Messages Area
+              Expanded(
+                child: _showWelcome && _messages.isEmpty
+                    ? _buildWelcomeScreen()
+                    : _buildChatList(notifier),
+              ),
+
+              // Input Field
+              _buildInputField(notifier),
+            ],
           ),
-          
-          // Input Field
-          _buildInputField(),
-        ],
-      ),
+        );
+      },
     );
   }
+
+  // =======================================================
+  // UI Components
+  // =======================================================
 
   Widget _buildHeader(BuildContext context) {
     return Container(
@@ -197,6 +284,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
               image: const DecorationImage(
                 image: AssetImage('assets/images/bg_awan.png'),
                 fit: BoxFit.cover,
+                opacity: 0.7, // Tingkatkan opasitas jika diperlukan
               ),
             ),
           ),
@@ -332,7 +420,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
     );
   }
 
-  Widget _buildChatList() {
+  Widget _buildChatList(AiNotifier notifier) {
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
@@ -345,14 +433,27 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
   }
 
   Widget _buildChatBubble(ChatMessage message) {
-    if (message.model3DUrl != null) {
+    // Menampilkan Model 3D Card
+    if (message.type == ChatAssetType.model3d && message.assetUrl != null) {
       return _build3DPreviewCard(message);
     }
 
-    if (message.isGenerating3D) {
-      return _buildGeneratingCard();
+    // Menampilkan 2D Image Card (Tahap 1 Result)
+    if (message.type == ChatAssetType.image2d && message.assetUrl != null) {
+      return _build2DImageCard(message); // Akan menggunakan Image.memory sekarang
     }
 
+    // Menampilkan Loading 3D Card (Simulasi Tahap 2)
+    if (message.type == ChatAssetType.model3d && message.assetUrl == null) {
+      return _buildGeneratingCard(message.text);
+    }
+
+    // Menampilkan Error Card
+    if (message.type == ChatAssetType.error) {
+       return _buildErrorCard(message.text);
+    }
+
+    // Menampilkan Text Bubble (Termasuk pesan User dan pesan Loading AI 2D)
     return Align(
       alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -391,7 +492,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
     );
   }
 
-  Widget _buildGeneratingCard() {
+  Widget _buildGeneratingCard(String text) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
@@ -415,7 +516,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Sedang membuat model 3D...',
+            text, // Bisa berupa 'Model 3D sedang dibuat...'
             style: kSubtitle.copyWith(
               fontSize: 14,
               color: kPrimaryBrown,
@@ -435,6 +536,167 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
     );
   }
 
+  Widget _buildErrorCard(String error) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: kInputFillColor.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.red.withOpacity(0.5),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error, color: Colors.red, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Gagal!',
+                  style: kSubtitle.copyWith(
+                    fontSize: 14,
+                    color: Colors.red.shade800,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  error,
+                  style: kBodyText.copyWith(
+                    fontSize: 13,
+                    color: kPrimaryBrown,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // MODIFIKASI: Menampilkan Gambar 2D yang Dihasilkan dari Base64
+ Widget _build2DImageCard(ChatMessage message) {
+   // Pastikan assetUrl tidak null dan merupakan Base64 string yang valid
+   if (message.assetUrl == null || message.assetUrl!.isEmpty) {
+     return _buildErrorCard('Base64 gambar 2D tidak tersedia.');
+   }
+   
+   // --- START PERBAIKAN BASE64 ---
+   String base64String = message.assetUrl!;
+
+   // 1. Hapus header URI Data jika ada (contoh: "data:image/jpeg;base64,")
+   if (base64String.contains(',')) {
+       base64String = base64String.split(',').last;
+       print('DEBUG: Base64 header dihapus.');
+   }
+   
+   // 2. Tambahkan padding jika diperlukan. Base64 harus kelipatan 4.
+   while (base64String.length % 4 != 0) {
+       base64String += '=';
+   }
+   // --- END PERBAIKAN BASE64 ---
+
+   Uint8List? imageBytes;
+   try {
+     // Decode Base64 string yang sudah dibersihkan
+     imageBytes = base64Decode(base64String);
+   } catch (e) {
+     print('ERROR decoding Base64: $e');
+     return _buildErrorCard('Gagal mendekode gambar 2D dari Base64. Cek konsol.');
+   }
+
+   return Container(
+     margin: const EdgeInsets.only(bottom: 12),
+     padding: const EdgeInsets.all(16),
+     decoration: BoxDecoration(
+       color: Colors.white,
+       borderRadius: BorderRadius.circular(20),
+       border: Border.all(
+         color: kPrimaryBrown.withOpacity(0.2),
+         width: 1,
+       ),
+       boxShadow: [
+         BoxShadow(
+           color: kPrimaryBrown.withOpacity(0.15),
+           blurRadius: 15,
+           offset: const Offset(0, 4),
+         ),
+       ],
+     ),
+     child: Column(
+       crossAxisAlignment: CrossAxisAlignment.start,
+       children: [
+         Padding(
+           padding: const EdgeInsets.only(bottom: 12),
+           child: Text(
+             message.text, // "Gambar 2D untuk "prompt" berhasil dibuat."
+             style: kBodyText.copyWith(
+               fontSize: 14,
+               color: kPrimaryBrown,
+               height: 1.4,
+             ),
+           ),
+         ),
+
+         // Tampilan Gambar 2D menggunakan Image.memory
+         Container(
+           height: 200,
+           width: double.infinity,
+           decoration: BoxDecoration(
+             color: kInputFillColor.withOpacity(0.2),
+             borderRadius: BorderRadius.circular(16),
+           ),
+           child: ClipRRect(
+             borderRadius: BorderRadius.circular(16),
+             child: imageBytes != null && imageBytes.isNotEmpty // Tambahkan cek isNotEmpty
+                 ? Image.memory(
+                       imageBytes,
+                       fit: BoxFit.cover,
+                       errorBuilder: (context, error, stackTrace) {
+                         print('ERROR rendering Image.memory: $error');
+                         return Center(
+                           child: Column(
+                             mainAxisAlignment: MainAxisAlignment.center,
+                             children: [
+                               Icon(Icons.broken_image, color: Colors.red.shade400, size: 40),
+                               const SizedBox(height: 8),
+                               Text(
+                                 'Gagal menampilkan gambar 2D.\nError: ${error.toString().split(':').first}',
+                                 textAlign: TextAlign.center,
+                                 style: kBodyText.copyWith(color: Colors.red.shade700, fontSize: 13),
+                               ),
+                             ],
+                           ),
+                         );
+                       },
+                     )
+                 : Center(
+                     child: Text(
+                       'Data gambar kosong atau tidak valid setelah decode.', // Pesan error yang lebih spesifik
+                       style: kBodyText.copyWith(color: Colors.red),
+                     ),
+                   ),
+           ),
+         ),
+         const SizedBox(height: 12),
+         Text(
+           'Gambar 2D ini akan digunakan sebagai dasar Model 3D.',
+           style: kBodyText.copyWith(
+             fontSize: 12,
+             color: kPrimaryBrown.withOpacity(0.6),
+           ),
+         ),
+       ],
+     ),
+   );
+ }
   Widget _build3DPreviewCard(ChatMessage message) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -487,7 +749,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
               ],
             ),
           ),
-          
+
           // 3D Preview Area
           Container(
             height: 250,
@@ -521,7 +783,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Gesek untuk memutar',
+                        'Gesek untuk memutar (${message.assetUrl!.split('/').last})',
                         style: kBodyText.copyWith(
                           fontSize: 12,
                           color: kPrimaryBrown.withOpacity(0.4),
@@ -545,7 +807,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
               ],
             ),
           ),
-          
+
           // Action Buttons
           Padding(
             padding: const EdgeInsets.all(16),
@@ -554,7 +816,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      print('View in AR');
+                      print('View in AR: ${message.assetUrl}');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kPrimaryBrown,
@@ -575,7 +837,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      print('Download');
+                      print('Download: ${message.assetUrl}');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kAccentOrange,
@@ -625,7 +887,10 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
     );
   }
 
-  Widget _buildInputField() {
+  Widget _buildInputField(AiNotifier notifier) {
+    // Tombol send disabled jika sedang loading
+    final bool isSendButtonActive = _isTyping && !notifier.loading;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       decoration: BoxDecoration(
@@ -643,11 +908,9 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
         children: [
           // Image picker button
           GestureDetector(
-            onTap: () {
+            onTap: notifier.loading ? null : () {
               print('Pick image');
-              // TODO: Implement image picker
-              // final ImagePicker picker = ImagePicker();
-              // final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+              // TODO: Implement image picker for 2D-to-3D flow
             },
             child: Container(
               padding: const EdgeInsets.all(10),
@@ -670,8 +933,8 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(25),
                 border: Border.all(
-                  color: _isTyping 
-                      ? kAccentOrange.withOpacity(0.4) 
+                  color: isSendButtonActive
+                      ? kAccentOrange.withOpacity(0.4)
                       : Colors.grey.withOpacity(0.25),
                   width: 1,
                 ),
@@ -682,8 +945,8 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
                     padding: const EdgeInsets.only(left: 16, right: 8),
                     child: Icon(
                       Icons.edit_outlined,
-                      color: _isTyping 
-                          ? kAccentOrange 
+                      color: isSendButtonActive
+                          ? kAccentOrange
                           : Colors.grey.withOpacity(0.4),
                       size: 18,
                     ),
@@ -691,6 +954,8 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
                   Expanded(
                     child: TextField(
                       controller: _textController,
+                      // Non-aktifkan input saat AI sedang bekerja
+                      enabled: !notifier.loading,
                       onChanged: (value) {
                         setState(() {
                           _isTyping = value.isNotEmpty;
@@ -699,17 +964,19 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
                       maxLines: null,
                       maxLength: null,
                       textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
+                      onSubmitted: isSendButtonActive
+                          ? (_) => _sendMessage(notifier)
+                          : null,
                       style: kBodyText.copyWith(
                         fontSize: 14,
                         color: Colors.black87,
                         fontWeight: FontWeight.w400,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Tuliskan sesuatu...',
+                        hintText: notifier.loading ? 'AI sedang bekerja...' : 'Tuliskan sesuatu...',
                         hintStyle: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey.withOpacity(0.45),
+                          color: notifier.loading ? kAccentOrange : Colors.grey.withOpacity(0.45),
                           fontWeight: FontWeight.w400,
                         ),
                         contentPadding: const EdgeInsets.symmetric(
@@ -728,20 +995,22 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: _isTyping ? _sendMessage : null,
+                        onTap: isSendButtonActive
+                            ? () => _sendMessage(notifier)
+                            : null,
                         borderRadius: BorderRadius.circular(25),
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: _isTyping 
-                                ? kAccentOrange 
+                            color: isSendButtonActive
+                                ? kAccentOrange
                                 : Colors.grey.withOpacity(0.15),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             Icons.arrow_forward,
-                            color: _isTyping 
-                                ? Colors.white 
+                            color: isSendButtonActive
+                                ? Colors.white
                                 : Colors.grey.withOpacity(0.4),
                             size: 18,
                           ),

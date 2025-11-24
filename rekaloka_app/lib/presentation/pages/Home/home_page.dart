@@ -5,25 +5,6 @@ import 'package:rekaloka_app/presentation/provider/location_notifier.dart';
 
 import '../../../common/constants.dart';
 
-const List<Map<String, String>> _dummyData = [
-  {
-    'title': 'Vihara Hok Ann Kiong',
-    'address': 'Jl. Yos Sudarso No.124/F, Bengkalis Kota, Kec. Bengkalis',
-    'imageUrl':
-        'https://placehold.co/400x300/6A4C32/FFFFFF?text=Vihara+Bengkalis',
-  },
-  {
-    'title': 'Rumah Adat Selaso Jatuh Kembar',
-    'address': 'Jl. Sudirman, Pekanbaru, Riau',
-    'imageUrl':
-        'https://placehold.co/400x300/3E8D62/FFFFFF?text=Selaso+Jatuh+Kembar',
-  },
-  {
-    'title': 'Istana Siak Sri Indrapura',
-    'address': 'Komp. Istana Siak, Siak, Riau',
-    'imageUrl': 'https://placehold.co/400x300/4B778D/FFFFFF?text=Istana+Siak',
-  },
-];
 
 class HomePage extends StatefulWidget {
   static const ROUTE_NAME = '/home';
@@ -145,7 +126,7 @@ class _HomeViewState extends State<HomePage> {
 
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: _LeaderboardSection(),
+                      child: LeaderboardSection(),
                     ),
 
                     const SizedBox(height: 80),
@@ -160,8 +141,8 @@ class _HomeViewState extends State<HomePage> {
   }
 }
 
-class _LeaderboardSection extends StatelessWidget {
-  const _LeaderboardSection();
+class LeaderboardSection extends StatelessWidget {
+  const LeaderboardSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -171,6 +152,9 @@ class _LeaderboardSection extends StatelessWidget {
       {'name': 'Sarah M', 'level': 100, 'rank': 1},
       {'name': 'Alice Wang', 'level': 30, 'rank': 3},
     ];
+
+    // Urutkan topThree berdasarkan rank untuk memastikan urutan 2-1-3
+    topThree.sort((a, b) => (a['rank'] as int).compareTo(b['rank'] as int));
 
     final otherUsers = [
       {'name': 'Dinda Sari', 'level': 28, 'rank': 4, 'badge': 'explorer'},
@@ -187,7 +171,7 @@ class _LeaderboardSection extends StatelessWidget {
     ];
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16), // Padding responsif
       decoration: BoxDecoration(
         border: Border.all(color: kPrimaryBrown.withOpacity(0.5), width: 1),
         color: const Color(0xFFFFF8E7),
@@ -203,119 +187,135 @@ class _LeaderboardSection extends StatelessWidget {
       child: Column(
         children: [
           // Top 3 Podium
-          SizedBox(
-            height: 200,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildPodiumItem(topThree[0], 2),
-                const SizedBox(width: 12),
-                _buildPodiumItem(topThree[1], 1),
-                const SizedBox(width: 12),
-                _buildPodiumItem(topThree[2], 3),
-              ],
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Hitung lebar maksimum yang tersedia untuk setiap item podium
+              final itemWidth = constraints.maxWidth / 3;
+              return SizedBox(
+                height: 220, // Tambahkan sedikit tinggi agar tidak terlalu sempit
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Posisi 2
+                    SizedBox(width: itemWidth, child: _buildPodiumItem(topThree[0], 2, itemWidth)),
+                    // Posisi 1
+                    SizedBox(width: itemWidth, child: _buildPodiumItem(topThree[1], 1, itemWidth)),
+                    // Posisi 3
+                    SizedBox(width: itemWidth, child: _buildPodiumItem(topThree[2], 3, itemWidth)),
+                  ],
+                ),
+              );
+            },
           ),
 
           const SizedBox(height: 20),
 
+          // Daftar Peringkat Lainnya
           ...otherUsers.map((user) => _buildLeaderboardItem(user)),
         ],
       ),
     );
   }
 
-  Widget _buildPodiumItem(Map<String, dynamic> user, int rank) {
+  // MODIFIKASI: Menerima maxWidth untuk responsivitas
+  Widget _buildPodiumItem(Map<String, dynamic> user, int rank, double maxWidth) {
     final isFirst = rank == 1;
+    final profileSize = isFirst ? maxWidth * 0.7 : maxWidth * 0.6; // Ukuran relatif terhadap lebar kolom
+    final iconSize = isFirst ? profileSize * 0.5 : profileSize * 0.45;
+    final trophySize = profileSize * 0.4;
+    final fontSizeName = isFirst ? 12.0 : 11.0;
+    final fontSizeLevel = 10.0;
 
-    return SizedBox(
-      width: 90,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: isFirst ? 70 : 60,
-                height: isFirst ? 70 : 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                  border: Border.all(color: _getRankColor(rank), width: 3),
-                ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        // 1. Avatar dan Trofi
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: profileSize,
+              height: profileSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border.all(color: _getRankColor(rank), width: isFirst ? 4 : 3),
+              ),
+              child: Icon(
+                Icons.person,
+                size: iconSize,
+                color: kPrimaryBrown.withOpacity(0.3),
+              ),
+            ),
+            if (isFirst)
+              Positioned(
+                top: -trophySize / 2,
+                left: 0,
+                right: 0,
                 child: Icon(
-                  Icons.person,
-                  size: isFirst ? 35 : 30,
-                  color: kPrimaryBrown.withOpacity(0.3),
+                  Icons.emoji_events,
+                  color: Colors.amber,
+                  size: trophySize,
                 ),
               ),
-              if (isFirst)
-                Positioned(
-                  top: -12,
-                  left: 0,
-                  right: 0,
-                  child: Icon(
-                    Icons.emoji_events,
-                    color: Colors.amber,
-                    size: 28,
-                  ),
-                ),
-            ],
+          ],
+        ),
+
+        const SizedBox(height: 6),
+
+        // 2. Nama Pengguna
+        Text(
+          user['name'].toString(),
+          style: kBodyText.copyWith(
+            fontSize: fontSizeName,
+            fontWeight: FontWeight.w600,
+            color: kPrimaryBrown,
           ),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
 
-          const SizedBox(height: 6),
+        const SizedBox(height: 4),
 
-          Text(
-            user['name'].toString(),
+        // 3. Badge Rank (Ikon Ranking)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: _getRankColor(rank).withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            _getBadgeIcon(rank),
+            size: 12,
+            color: _getRankColor(rank),
+          ),
+        ),
+
+        const SizedBox(height: 6),
+        
+        // 4. Level
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            'Lvl. ${user['level']}',
             style: kBodyText.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+              fontSize: fontSizeLevel,
+              fontWeight: FontWeight.w700,
               color: kPrimaryBrown,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
-
-          const SizedBox(height: 4),
-
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: _getRankColor(rank).withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              _getBadgeIcon(rank),
-              size: 12,
-              color: _getRankColor(rank),
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'Lvl. ${user['level']}',
-              style: kBodyText.copyWith(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: kPrimaryBrown,
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
+  // Widget ini sudah cukup responsif karena menggunakan Expanded
   Widget _buildLeaderboardItem(Map<String, dynamic> user) {
     final isCurrentUser = user['isCurrentUser'] == true;
 
@@ -323,7 +323,8 @@ class _LeaderboardSection extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: kPrimaryBrown.withOpacity(isCurrentUser ? 0.15 : 0.8),
+        // Opacity dikurangi agar lebih mudah dibaca saat isCurrentUser=false
+        color: isCurrentUser ? kPrimaryBrown.withOpacity(0.15) : kPrimaryBrown.withOpacity(0.9), 
         borderRadius: BorderRadius.circular(14),
         border: isCurrentUser
             ? Border.all(color: kAccentOrange, width: 2)
@@ -331,12 +332,14 @@ class _LeaderboardSection extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // Bintang (hanya untuk user saat ini)
           if (isCurrentUser)
             Padding(
               padding: const EdgeInsets.only(right: 6),
               child: Icon(Icons.star, color: kAccentOrange, size: 18),
             ),
 
+          // Rank
           SizedBox(
             width: 25,
             child: Text(
@@ -351,10 +354,11 @@ class _LeaderboardSection extends StatelessWidget {
 
           const SizedBox(width: 8),
 
+          // Avatar
           Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white,
             ),
@@ -367,7 +371,7 @@ class _LeaderboardSection extends StatelessWidget {
 
           const SizedBox(width: 10),
 
-          // Name
+          // Name (Expanded untuk menggunakan sisa ruang)
           Expanded(
             child: Text(
               user['name'].toString(),
@@ -376,6 +380,7 @@ class _LeaderboardSection extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: isCurrentUser ? kPrimaryBrown : kTextWhite,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
 
@@ -450,6 +455,7 @@ class _LeaderboardSection extends StatelessWidget {
     if (badgeStr.contains('master')) return Colors.purple;
     if (badgeStr.contains('premium')) return Colors.orange;
     if (badgeStr.contains('explorer')) return Colors.blue;
+    if (badgeStr.contains('beginner')) return Colors.green.shade600; // Tambahkan warna untuk beginner
     return Colors.grey;
   }
 
@@ -459,6 +465,7 @@ class _LeaderboardSection extends StatelessWidget {
     if (badgeStr.contains('master')) return Icons.workspace_premium;
     if (badgeStr.contains('premium')) return Icons.military_tech;
     if (badgeStr.contains('explorer')) return Icons.explore;
+    if (badgeStr.contains('beginner')) return Icons.star_border; // Ikon yang lebih cocok
     return Icons.shield;
   }
 }
@@ -619,7 +626,7 @@ class _HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 260,
+      height: 200,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: kPrimaryBrown,
@@ -632,108 +639,122 @@ class _HeroSection extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+     // Asumsi: ReconstructionPage.ROUTE_NAME telah didefinisikan
+
+child: Row(
+  crossAxisAlignment: CrossAxisAlignment.center,
+  children: [
+    // Kolom Kiri: Teks dan Tombol (Mengambil 6/11 ≈ 54.5% dari ruang yang tersedia)
+    Expanded(
+      // MENGECILKAN LEBAR: Mengubah flex dari 7 menjadi 6
+      flex: 6, 
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        // Ganti spaceBetween menjadi start dan gunakan SizedBox untuk jarak stabil
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Agar Column tidak memakan ruang vertikal berlebihan
         children: [
-          Expanded(
-            flex: 7,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Jelajahi & Rekonstruksi Warisan Budaya dengan 3D',
-                  style: kHeading5.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: kTextWhite,
-                    height: 1.3,
-                  ),
-                  maxLines: 4,
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [kAccentOrange, kAccentOrange.withOpacity(0.8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: [
-                      BoxShadow(
-                        color: kAccentOrange.withOpacity(0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(
-                        context,
-                      ).pushNamed(ReconstructionPage.ROUTE_NAME);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: kTextWhite,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 10,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Mulai Rekonstruksi',
-                          style: kButtonText.copyWith(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        const Icon(Icons.arrow_forward_ios, size: 12),
-                      ],
-                    ),
-                  ),
+          // Teks Judul
+          Text(
+            'Jelajahi & Rekonstruksi Warisan Budaya dengan 3D',
+            style: kHeading5.copyWith(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: kTextWhite,
+              height: 1.3,
+            ),
+            maxLines: 4,
+          ),
+          
+          const SizedBox(height: 16), // Jarak stabil antara teks dan tombol
+          
+          // Tombol Rekonstruksi
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [kAccentOrange, kAccentOrange.withOpacity(0.8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: kAccentOrange.withOpacity(0.4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // Bagian Kanan: Gambar Wayang
-          Expanded(
-            flex: 4,
-            child: Image.asset(
-              'assets/images/fg_wayang.png',
-              fit: BoxFit.fitHeight,
-              height: 150,
-              errorBuilder: (context, error, stackTrace) => Container(
-                height: 220,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF50341F),
-                  borderRadius: BorderRadius.circular(12),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).pushNamed(ReconstructionPage.ROUTE_NAME);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                foregroundColor: kTextWhite,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
                 ),
-                child: Center(
-                  child: Text(
-                    'Karakter 3D',
-                    style: kBodyText.copyWith(
-                      color: Colors.white54,
-                      fontSize: 11,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Mulai Rekonstruksi',
+                    style: kButtonText.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.arrow_forward_ios, size: 12),
+                ],
               ),
             ),
           ),
         ],
       ),
+    ),
+
+    // Jarak horizontal antara kolom
+    const SizedBox(width: 8),
+
+    // Kolom Kanan: Gambar Wayang (Mengambil 5/11 ≈ 45.5% dari ruang yang tersedia)
+    // Flex 4 diubah menjadi 5 untuk mempertahankan rasio yang lebih baik (6:5)
+    Expanded(
+      flex: 5,
+      child: Image.asset(
+        'assets/images/fg_wayang.png',
+        fit: BoxFit.fitHeight,
+        height: 150,
+        errorBuilder: (context, error, stackTrace) => Container(
+          // Tinggi disesuaikan agar proporsional
+          height: 180, 
+          decoration: BoxDecoration(
+            color: const Color(0xFF50341F),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              'Karakter 3D',
+              style: kBodyText.copyWith(
+                color: Colors.white54,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  ],
+),
     );
   }
 }

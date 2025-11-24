@@ -1,6 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+
+
+const String baseImageHotspotUrl =
+    'https://res.cloudinary.com/dcddozugb/image/upload/v1763523717/rekaloka_hotspots';
+
+
+const String baseImageProofsUrl =
+    'https://res.cloudinary.com/dcddozugb/image/upload/v1763523717/rekaloka_proofs';
+
+    
+
+const String baseImageUrl =
+    'https://res.cloudinary.com/dcddozugb/image/upload/v1763523717/rekaloka_general';
+
+
+const String baseImageProvinceUrl =
+    'https://res.cloudinary.com/dcddozugb/image/upload/v1763523717/rekaloka_provinces';
+
+
+
+
 // --- Colors ---
 const Color kPrimaryBrown = Color(0xFF5C3317);
 const Color kAccentOrange = Color(0xFFD36A3C);
