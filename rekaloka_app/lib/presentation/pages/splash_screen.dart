@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rekaloka_app/presentation/pages/onboarding_page.dart';
+import 'onboarding_page.dart';
 import '../../common/constants.dart';
 import 'Home/home_page.dart';
 

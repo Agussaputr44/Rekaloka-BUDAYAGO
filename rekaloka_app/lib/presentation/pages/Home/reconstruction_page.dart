@@ -636,7 +636,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
          Padding(
            padding: const EdgeInsets.only(bottom: 12),
            child: Text(
-             message.text, // "Gambar 2D untuk "prompt" berhasil dibuat."
+             message.text, 
              style: kBodyText.copyWith(
                fontSize: 14,
                color: kPrimaryBrown,
@@ -655,7 +655,7 @@ class _ReconstructionPageState extends State<ReconstructionPage> {
            ),
            child: ClipRRect(
              borderRadius: BorderRadius.circular(16),
-             child: imageBytes != null && imageBytes.isNotEmpty // Tambahkan cek isNotEmpty
+             child: imageBytes != null && imageBytes.isNotEmpty 
                  ? Image.memory(
                        imageBytes,
                        fit: BoxFit.cover,

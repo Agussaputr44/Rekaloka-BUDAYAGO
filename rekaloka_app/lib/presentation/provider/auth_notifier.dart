@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:rekaloka_app/domain/usecases/auth/get_token_user.dart';
-import 'package:rekaloka_app/domain/usecases/auth/save_token_user.dart';
+import '../../domain/usecases/auth/get_token_user.dart';
+import '../../domain/usecases/auth/save_token_user.dart';
 import '../../common/state.dart';
 import '../../domain/usecases/auth/login.dart';
 import '../../domain/usecases/auth/register.dart';

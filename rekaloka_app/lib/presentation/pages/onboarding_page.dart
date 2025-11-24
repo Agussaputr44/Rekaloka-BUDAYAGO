@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rekaloka_app/presentation/pages/auth/login_page.dart';
-import 'package:rekaloka_app/presentation/pages/home/home_page.dart';
-import 'package:rekaloka_app/presentation/provider/auth_notifier.dart';
+import 'auth/login_page.dart';
+import 'home/home_page.dart';
+import '../provider/auth_notifier.dart';
 import '../../../common/constants.dart';
 import '../../common/state.dart';
 
@@ -192,7 +192,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   Widget _buildOnboardingPage(OnboardingContent content) {
-    void _startNavigation() async {
+    void startNavigation() async {
       await Future.delayed(const Duration(milliseconds: 2500));
 
       if (!mounted) return;
@@ -453,7 +453,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           curve: Curves.easeInOut,
                         );
                       } else {
-                        _startNavigation();
+                        startNavigation();
                       }
                     },
                     child: Container(

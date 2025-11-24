@@ -28,7 +28,7 @@ class _VerificationPageState extends State<VerificationPage> {
   final FocusNode _codeInputFocusNode = FocusNode();
 
   // Flag untuk memastikan fokus di-request hanya sekali setelah build
-  bool _didRequestFocus = false;
+  final bool _didRequestFocus = false;
 
   @override
   void initState() {

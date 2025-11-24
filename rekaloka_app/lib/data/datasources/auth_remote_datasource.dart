@@ -19,10 +19,10 @@ abstract class AuthRemoteDataSource {
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final AuthLocalDatasource authLocalDatasource;
   final http.Client client;
-  final String authUrl = 'https://fancy-quick-lacewing.ngrok-free.app/api/auth';
+  final String authUrl = 'https://7154edf69811.ngrok-free.app/api/auth';
   
   final String profileUrl =
-      'https://fancy-quick-lacewing.ngrok-free.app/api/profile';
+      'https://7154edf69811.ngrok-free.app/api/profile';
 
   AuthRemoteDataSourceImpl({
     required this.client,
@@ -131,7 +131,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     };
 
     final response = await client.get(
-      Uri.parse('$profileUrl'),
+      Uri.parse(profileUrl),
       headers: headers,
     );
 

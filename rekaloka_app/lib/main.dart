@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rekaloka_app/presentation/provider/ai_notifier.dart';
-import 'package:rekaloka_app/presentation/provider/location_notifier.dart';
+import 'presentation/provider/ai_notifier.dart';
+import 'presentation/provider/leaderboard_notifier.dart';
+import 'presentation/provider/location_notifier.dart';
 import 'presentation/pages/auth/login_page.dart';
 import 'presentation/pages/auth/register_page.dart';
 import 'presentation/pages/auth/verification_page.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => sl.sl<AuthNotifier>()),
         ChangeNotifierProvider(create: (_) => sl.sl<AiNotifier>()),
         ChangeNotifierProvider(create: (_) => sl.sl<LocationNotifier>()),
+        ChangeNotifierProvider(create: (_) => sl.sl<LeaderboardNotifier>()),
         ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

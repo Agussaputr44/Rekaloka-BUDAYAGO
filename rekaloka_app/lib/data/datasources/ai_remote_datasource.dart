@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:rekaloka_app/data/models/generate_image_response_model.dart';
+import '../models/generate_image_response_model.dart';
 
 import '../../common/exceptions.dart';
 import 'local/auth_local_datasource.dart';
@@ -26,7 +26,7 @@ class AiRemoteDataSourceImpl implements AiRemoteDataSource {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     };
-    const String baseUrl = 'https://fancy-quick-lacewing.ngrok-free.app/api/ai';
+    const String baseUrl = 'https://7154edf69811.ngrok-free.app/api/ai';
     final response = await client.post(
       Uri.parse('$baseUrl/generate-image'),
       headers: headers,

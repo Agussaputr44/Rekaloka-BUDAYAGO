@@ -1,8 +1,10 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
-import 'package:rekaloka_app/data/datasources/ai_remote_datasource.dart';
-import 'package:rekaloka_app/data/datasources/local/location_datarources.dart';
-import 'package:rekaloka_app/domain/usecases/location/get_addres.dart';
+import 'data/datasources/ai_remote_datasource.dart';
+import 'data/datasources/leaderboard_remote_datasource.dart';
+import 'data/datasources/local/location_datarources.dart';
+import 'domain/usecases/leaderboard/get_top_leaderboard.dart';
+import 'domain/usecases/location/get_addres.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // AUTH
@@ -30,6 +32,12 @@ import 'package:rekaloka_app/data/repositories/ai_repository_impl.dart';
 import 'package:rekaloka_app/domain/repositories/ai_repository.dart';
 import 'package:rekaloka_app/domain/usecases/ai/text_to_image.dart';
 import 'package:rekaloka_app/presentation/provider/ai_notifier.dart';
+
+// --- LEADERBOARD IMPORTS BARU ---
+import 'package:rekaloka_app/data/repositories/leaderboard_repository_impl.dart';
+import 'package:rekaloka_app/domain/repositories/leaderboard_repository.dart';
+import 'package:rekaloka_app/presentation/provider/leaderboard_notifier.dart';
+
 
 final sl = GetIt.instance;
 
@@ -132,4 +140,28 @@ Future<void> init() async {
   // M. AI NOTIFIER (BARU)
   // =======================================================
   sl.registerFactory(() => AiNotifier(textToImageUseCase: sl()));
+  
+  // =======================================================
+  // N. LEADERBOARD DATA SOURCES (BARU)
+  // =======================================================
+  sl.registerLazySingleton<LeaderboardRemoteDataSource>(
+    () => LeaderboardRemoteDataSourceImpl(client: sl()),
+  );
+
+  // =======================================================
+  // O. LEADERBOARD REPOSITORY (BARU)
+  // =======================================================
+  sl.registerLazySingleton<LeaderboardRepository>(
+    () => LeaderboardRepositoryImpl(remoteDataSource: sl(), authLocalDatasource: sl()),
+  );
+
+  // =======================================================
+  // P. LEADERBOARD USE CASES (BARU)
+  // =======================================================
+  sl.registerLazySingleton(() => GetTopLeaderboard(sl()));
+
+  // =======================================================
+  // Q. LEADERBOARD NOTIFIER (BARU)
+  // =======================================================
+  sl.registerFactory(() => LeaderboardNotifier(sl()));
 }

@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import 'package:rekaloka_app/data/datasources/ai_remote_datasource.dart';
-import 'package:rekaloka_app/domain/repositories/ai_repository.dart';
+import '../datasources/ai_remote_datasource.dart';
+import '../../domain/repositories/ai_repository.dart';
 
 import '../../common/exceptions.dart';
 import '../../common/failure.dart';
@@ -30,7 +30,7 @@ class AiRepositoryImpl implements AiRepository{
       final imageUrl = await remoteDataSource.generateImage(prompt, token);
       
       return Right(imageUrl);
-    } on ServerException catch (e) {
+    } on ServerException {
       return Left(ServerFailure ('Terjadi kesalahan pada server AI.'));
     } catch (e) {
       return Left(ServerFailure('Terjadi kesalahan yang tidak terduga: ${e.toString()}'));

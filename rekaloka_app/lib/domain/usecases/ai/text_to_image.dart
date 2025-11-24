@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:rekaloka_app/domain/repositories/ai_repository.dart';
+import '../../repositories/ai_repository.dart';
 
 import '../../../common/failure.dart';
 

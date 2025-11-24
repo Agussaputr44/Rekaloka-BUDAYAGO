@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../../common/constants.dart';
 import '../../../common/state.dart';
 import '../../provider/auth_notifier.dart';
